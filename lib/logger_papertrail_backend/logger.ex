@@ -60,6 +60,9 @@ defmodule LoggerPapertrailBackend.Logger do
     Logger.compare_levels(lvl, min) != :lt
   end
 
+  defp update_with_system_env(nil, config), do: config
+  defp update_with_system_env(url, config), do: Keyword.merge(config,[url: url])
+
   defp configure(device, options) do
     config =
       Application.get_env(:logger, :logger_papertrail_backend, [])
@@ -68,6 +71,7 @@ defmodule LoggerPapertrailBackend.Logger do
     if device === :user do
       Application.put_env(:logger, :logger_papertrail_backend, config)
     end
+    config = update_with_system_env(System.get_env("PAPERTRAIL_URL"), config)
 
     format =
       Keyword.get(config, :format, @default_format)
@@ -82,7 +86,8 @@ defmodule LoggerPapertrailBackend.Logger do
 
     %{format: format, metadata: metadata,
       level: level, colors: colors, device: device,
-      host: target_config.host, port: target_config.port, system_name: target_config.system_name }
+      host: target_config.host, port: target_config.port,
+      system_name: target_config.system_name }
   end
 
   defp configure_merge(env, options) do
